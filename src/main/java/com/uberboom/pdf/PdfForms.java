@@ -260,17 +260,15 @@ public class PdfForms {
     }
 
 
-	/**
-	 * Get tag value
-	 * 
-	 * @param sTag String
-	 * @param eElement Element
-	 * 
-	 * @return String
-	 */
-	private static String getTagValue(String sTag, Element eElement)
-	{
-		NodeList nlList = eElement.getElementsByTagName(sTag);
+    /**
+     * Get tag value
+     *
+     * @param sTag     String
+     * @param eElement Element
+     * @return String
+     */
+    private static String getTagValue(String sTag, Element eElement) {
+        NodeList nlList = eElement.getElementsByTagName(sTag);
         if (nlList.getLength() == 0) {
             return "";
         }
@@ -283,20 +281,18 @@ public class PdfForms {
             return "";
         }
 
-	}
-	
-	/**
-	 * Get tag value
-	 *
-	 * @param sTag String
-	 * @param eElement Element
-	 *
-	 * @return Integer[]
-	 */
-	private static Integer[] getColorArray(String sTag, Element eElement)
-	{
-		System.out.println("Get color");
-		NodeList nlList = eElement.getElementsByTagName(sTag);
+    }
+
+    /**
+     * Get tag value
+     *
+     * @param sTag     String
+     * @param eElement Element
+     * @return Integer[]
+     */
+    private static Integer[] getColorArray(String sTag, Element eElement) {
+        System.out.println("Get color");
+        NodeList nlList = eElement.getElementsByTagName(sTag);
         if (nlList.getLength() == 0) {
             return null;
         }
