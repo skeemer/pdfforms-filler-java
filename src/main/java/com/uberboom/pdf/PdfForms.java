@@ -14,7 +14,6 @@ import com.itextpdf.text.pdf.PdfContentByte;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
-// import joptsimple.OptionException;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
