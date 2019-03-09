@@ -163,11 +163,14 @@ public class PdfForms {
                         verboseMessages.poll();
                         verboseMessages.addFirst("Type: " + type + " is unknown");
                     }
+
                     if (verboseMode) {
                         while (verboseMessages.size() > 0) {
                             System.out.println(verboseMessages.poll());
                         }
                         System.out.println("-----------------------");
+                    } else {
+                        verboseMessages.clear();
                     }
                 }
             }
