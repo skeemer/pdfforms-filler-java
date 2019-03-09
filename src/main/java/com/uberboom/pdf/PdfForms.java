@@ -17,10 +17,9 @@ import joptsimple.OptionSet;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Node;
-import org.w3c.dom.Element;
+
+import org.w3c.dom.*;
+
 import java.io.File;
 
 /**
@@ -122,12 +121,16 @@ public class PdfForms {
 						String sX = getTagValue("x", cElement);
 						String sY = getTagValue("y", cElement);
 						String sSize = getTagValue("size", cElement);
+						Integer[] stroke = getColorArray("stroke", cElement);
 						float x = Float.parseFloat(sX);
 						float y = Float.parseFloat(sY);
 						float size = Float.parseFloat(sSize);
 						cb.saveState();
 						cb.beginText();
 						cb.moveText(x, y);
+						if(stroke != null) {
+							cb.setRGBColorFill(stroke[0], stroke[1], stroke[2]);
+						}
 						if (font.equals("")) {
 							cb.setFontAndSize(bfStandard, size);
 						} else {
@@ -274,7 +277,34 @@ public class PdfForms {
 
 	}
 	
-	
+	/**
+	 * Get tag value
+	 *
+	 * @param sTag String
+	 * @param eElement Element
+	 *
+	 * @return Integer[]
+	 */
+	private static Integer[] getColorArray(String sTag, Element eElement)
+	{
+		System.out.println("Get color");
+		NodeList nlList = eElement.getElementsByTagName(sTag);
+        if (nlList.getLength() == 0) {
+        	return null;
+        }
+
+		Integer[] children = new Integer[3];
+
+		Node nValue = nlList.item(0);
+		NamedNodeMap attributes = nValue.getAttributes();
+		children[0] = Integer.valueOf(attributes.getNamedItem("red").getNodeValue());
+		System.out.println("Red" + children[0].toString());
+		children[1] = Integer.valueOf(attributes.getNamedItem("green").getNodeValue());
+		children[2] = Integer.valueOf(attributes.getNamedItem("blue").getNodeValue());
+		return children;
+	}
+
+
 	/**
 	 * Print form fields
 	 */
