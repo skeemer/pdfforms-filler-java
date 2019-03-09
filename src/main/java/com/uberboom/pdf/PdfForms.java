@@ -2,6 +2,7 @@ package com.uberboom.pdf;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.Set;
 
 import com.itextpdf.text.pdf.AcroFields;
@@ -71,8 +72,14 @@ public class PdfForms {
         System.out.println("XML File:     " + xmlFile);
         System.out.println("PDF Target:   " + pdfTarget);
         System.out.println("Fonts Path:   " + fontPath);
+        System.out.println("-----------------------");
+
+        if (verboseMode) {
+            printFormFields();
+        }
 
         try {
+            LinkedList<String> verboseMessages = new LinkedList<String>();
 
             FileOutputStream outputStream = new FileOutputStream(pdfTarget);
 
@@ -91,27 +98,23 @@ public class PdfForms {
 
                 Node nNode = nList.item(temp);
                 if (nNode.getNodeType() == Node.ELEMENT_NODE) {
-
                     Element eElement = (Element) nNode;
-                    // String type = getTagValue("type", eElement);
-                    String key = getTagValue("key", eElement);
-                    String value = getTagValue("value", eElement);
                     String type = getTagValue("type", eElement);
-                    String readonly = getTagValue("readonly", eElement);
-
-                    if (verboseMode) {
-                        System.out.println("Type: " + type);
-                        System.out.println("Key: " + key);
-                        System.out.println("Value: " + value);
-                        System.out.println("Readonly: " + readonly);
-                        System.out.println("-----------------------");
-                    }
+                    verboseMessages.add("Type: " + type);
+                    String value = getTagValue("value", eElement);
+                    verboseMessages.add("Value: " + value);
 
                     if (type.equals("field")) {
+                        String key = getTagValue("key", eElement);
+                        verboseMessages.add("Key: " + key);
+                        String readonly = getTagValue("readonly", eElement);
+                        verboseMessages.add("Readonly: " + readonly);
                         form.setField(key, value);
                         if (readonly.equals("true")) {
                             form.setFieldProperty(key, "setfflags", PdfFormField.FF_READ_ONLY, null);
                         }
+                    } else if (type.equals("image")) {
+
                     } else if (type.equals("text")) {
                         NodeList cList = eElement.getElementsByTagName("config");
                         Element cElement = (Element) cList.item(0);
@@ -121,19 +124,27 @@ public class PdfForms {
                         if (!sPage.equals("")) {
                             page = Integer.parseInt(sPage);
                         }
+                        verboseMessages.add("Page: " + Integer.valueOf(page).toString());
 
                         String font = getTagValue("font", cElement);
+                        verboseMessages.add("Font: " + font);
                         Integer[] stroke = getColorArray("stroke", cElement);
+                        if (stroke != null) {
+                            verboseMessages.add("Stroke: (" + stroke[0] + "," + stroke[1] + "," + stroke[2] + ")");
+                        }
+
+                        String sSize = getTagValue("size", cElement);
+                        verboseMessages.add("Size: " + sSize);
 
                         String sX = getTagValue("x", cElement);
+                        verboseMessages.add("X: " + sX);
                         String sY = getTagValue("y", cElement);
-                        String sSize = getTagValue("size", cElement);
+                        verboseMessages.add("Y: " + sY);
 
                         float x = Float.parseFloat(sX);
                         float y = Float.parseFloat(sY);
                         float size = Float.parseFloat(sSize);
 
-                        System.out.println("Load page #" + Integer.valueOf(page).toString());
                         PdfContentByte cb = stamper.getOverContent(page);
                         cb.saveState();
                         cb.beginText();
@@ -151,13 +162,16 @@ public class PdfForms {
                         cb.endText();
                         cb.restoreState();
                     } else {
-                        if (verboseMode) {
-                            System.out.println("Type: " + type + " not defined");
-                        }
+                        verboseMessages.poll();
+                        verboseMessages.addFirst("Type: " + type + " is unknown");
                     }
-
+                    if (verboseMode) {
+                        while (verboseMessages.size() > 0) {
+                            System.out.println(verboseMessages.poll());
+                        }
+                        System.out.println("-----------------------");
+                    }
                 }
-
             }
 
             stamper.setFormFlattening(flatten);
@@ -227,10 +241,6 @@ public class PdfForms {
             System.exit(4);
         }
 
-        if (verboseMode) {
-            printFormFields();
-        }
-
     }
 
 
@@ -291,7 +301,6 @@ public class PdfForms {
      * @return Integer[]
      */
     private static Integer[] getColorArray(String sTag, Element eElement) {
-        System.out.println("Get color");
         NodeList nlList = eElement.getElementsByTagName(sTag);
         if (nlList.getLength() == 0) {
             return null;
@@ -302,7 +311,6 @@ public class PdfForms {
         Node nValue = nlList.item(0);
         NamedNodeMap attributes = nValue.getAttributes();
         children[0] = Integer.valueOf(attributes.getNamedItem("red").getNodeValue());
-        System.out.println("Red" + children[0].toString());
         children[1] = Integer.valueOf(attributes.getNamedItem("green").getNodeValue());
         children[2] = Integer.valueOf(attributes.getNamedItem("blue").getNodeValue());
         return children;
@@ -354,6 +362,11 @@ public class PdfForms {
                     default:
                         System.out.println("?");
                 }
+                System.out.println("-----------------------");
+            }
+
+            if (fields.isEmpty()) {
+                System.out.println("No form fields found");
                 System.out.println("-----------------------");
             }
 
