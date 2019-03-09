@@ -63,8 +63,7 @@ public class PdfForms {
 	/**
 	 * Main
 	 *
-	 * @param args
-	 * @return void
+	 * @param args String[]
 	 */
 	public static void main(String[] args)
 	{
@@ -123,9 +122,9 @@ public class PdfForms {
 						String sX = getTagValue("x", cElement);
 						String sY = getTagValue("y", cElement);
 						String sSize = getTagValue("size", cElement);
-						Float x = Float.valueOf(sX).floatValue();
-						Float y = Float.valueOf(sY).floatValue();
-						Float size = Float.valueOf(sSize).floatValue();
+						float x = Float.parseFloat(sX);
+						float y = Float.parseFloat(sY);
+						float size = Float.parseFloat(sSize);
 						cb.saveState();
 						cb.beginText();
 						cb.moveText(x, y);
@@ -171,8 +170,6 @@ public class PdfForms {
 	
 	/**
 	 * Parse arguments
-	 * 
-	 * @return void
 	 */
 	private static void setOptions(String[] args)
 	{
@@ -255,8 +252,8 @@ public class PdfForms {
 	/**
 	 * Get tag value
 	 * 
-	 * @param sTag
-	 * @param eElement
+	 * @param sTag String
+	 * @param eElement Element
 	 * 
 	 * @return String
 	 */
@@ -269,8 +266,8 @@ public class PdfForms {
 
 		NodeList nlChildList = nlList.item(0).getChildNodes();
 		if (nlChildList.getLength() > 0) {
-			Node nValue = (Node) nlChildList.item(0);
-			return (String) nValue.getNodeValue();
+			Node nValue = nlChildList.item(0);
+			return nValue.getNodeValue();
 		} else {
 			return "";
 		}
@@ -280,8 +277,6 @@ public class PdfForms {
 	
 	/**
 	 * Print form fields
-	 * 
-	 * @return void
 	 */
 	private static void printFormFields()
 	{
