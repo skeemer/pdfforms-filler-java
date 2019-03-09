@@ -29,7 +29,6 @@ import java.io.File;
  * @author Bernd Ennsfellner
  */
 public class PdfForms {
-
     /**
      * PDF template with form fields
      */
@@ -191,7 +190,6 @@ public class PdfForms {
         }
 
         System.out.println("Finished");
-
     }
 
 
@@ -240,7 +238,6 @@ public class PdfForms {
             System.err.println("Missing argument: --xml (XML file)");
             System.exit(4);
         }
-
     }
 
 
@@ -266,7 +263,6 @@ public class PdfForms {
         }
 
         return nList;
-
     }
 
 
@@ -290,7 +286,6 @@ public class PdfForms {
         } else {
             return "";
         }
-
     }
 
     /**
@@ -325,7 +320,6 @@ public class PdfForms {
         System.out.println("-----------------------");
 
         try {
-
             PdfReader reader = new PdfReader(pdfTemplate);
 
             AcroFields form = reader.getAcroFields();
@@ -379,8 +373,5 @@ public class PdfForms {
             e.printStackTrace();
             System.exit(42);
         }
-
     }
-
-
 }
