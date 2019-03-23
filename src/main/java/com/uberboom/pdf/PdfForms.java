@@ -2,15 +2,13 @@ package com.uberboom.pdf;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Set;
 
-import com.itextpdf.text.pdf.AcroFields;
-import com.itextpdf.text.pdf.BaseFont;
-import com.itextpdf.text.pdf.PdfFormField;
-import com.itextpdf.text.pdf.PdfReader;
-import com.itextpdf.text.pdf.PdfStamper;
-import com.itextpdf.text.pdf.PdfContentByte;
+import com.itextpdf.awt.geom.AffineTransform;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -19,6 +17,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
 
 import org.w3c.dom.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import java.io.File;
 
@@ -70,6 +70,9 @@ public class PdfForms {
         System.out.println("XML File:     " + xmlFile);
         System.out.println("PDF Target:   " + pdfTarget);
         System.out.println("Fonts Path:   " + fontPath);
+        for (String s : FontFactory.getRegisteredFonts()) {
+            System.out.println("              " + s);
+        }
         System.out.println("-----------------------");
 
         if (verboseMode) {
@@ -112,7 +115,48 @@ public class PdfForms {
                             form.setFieldProperty(key, "setfflags", PdfFormField.FF_READ_ONLY, null);
                         }
                     } else if (type.equals("image")) {
+                        NodeList cList = eElement.getElementsByTagName("config");
+                        Element cElement = (Element) cList.item(0);
 
+                        String sPage = getTagValue("page", cElement);
+                        int page = 1;
+                        if (!sPage.equals("")) {
+                            page = Integer.parseInt(sPage);
+                        }
+                        verboseMessages.add("Page: " + Integer.valueOf(page).toString());
+
+                        String sX = getTagValue("x", cElement);
+                        verboseMessages.add("X: " + sX);
+                        String sY = getTagValue("y", cElement);
+                        verboseMessages.add("Y: " + sY);
+                        String sWidth = getTagValue("width", cElement);
+                        verboseMessages.add("Width: " + sWidth);
+                        String sHeight = getTagValue("height", cElement);
+                        verboseMessages.add("Height: " + sHeight);
+
+                        float x = Float.parseFloat(sX);
+                        float y = Float.parseFloat(sY);
+                        float width = Float.parseFloat(sWidth);
+                        float height = Float.parseFloat(sHeight);
+
+
+                        Image image = Image.getInstance(value);
+                        image.setWidthPercentage(50);
+
+                        AffineTransform at = AffineTransform.getTranslateInstance(x, y);
+                        if (width > 0 && height > 0) {
+                            float xPct = width / image.getWidth();
+                            float yPct = height / image.getHeight();
+                            at.concatenate(AffineTransform.getScaleInstance(image.getScaledWidth() * xPct,
+                                    image.getScaledHeight() * yPct));
+                        }
+                        double[] matrix = new double[6];
+                        at.getMatrix(matrix);
+
+                        PdfContentByte cb = stamper.getOverContent(page);
+                        cb.saveState();
+                        cb.addImage(image, matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
+                        cb.restoreState();
                     } else if (type.equals("text")) {
                         NodeList cList = eElement.getElementsByTagName("config");
                         Element cElement = (Element) cList.item(0);
@@ -158,6 +202,62 @@ public class PdfForms {
                         }
                         cb.showText(value);
                         cb.endText();
+                        cb.restoreState();
+                    } else if (type.equals("text-box")) {
+                        NodeList cList = eElement.getElementsByTagName("config");
+                        Element cElement = (Element) cList.item(0);
+
+                        String sPage = getTagValue("page", cElement);
+                        int page = 1;
+                        if (!sPage.equals("")) {
+                            page = Integer.parseInt(sPage);
+                        }
+                        verboseMessages.add("Page: " + Integer.valueOf(page).toString());
+
+                        String font = getTagValue("font", cElement);
+                        String fontStyle = getTagAttribute("font", "style", cElement);
+                        verboseMessages.add("Font: " + font + " " + fontStyle);
+
+
+                        Integer[] stroke = getColorArray("stroke", cElement);
+                        if (stroke != null) {
+                            verboseMessages.add("Stroke: (" + stroke[0] + "," + stroke[1] + "," + stroke[2] + ")");
+                        }
+
+                        String sSize = getTagValue("size", cElement);
+                        verboseMessages.add("Size: " + sSize);
+
+                        String sX = getTagValue("x", cElement);
+                        verboseMessages.add("X: " + sX);
+                        String sY = getTagValue("y", cElement);
+                        verboseMessages.add("Y: " + sY);
+                        String sWidth = getTagValue("width", cElement);
+                        verboseMessages.add("Width: " + sWidth);
+                        String sHeight = getTagValue("height", cElement);
+                        verboseMessages.add("Height: " + sHeight);
+
+                        float fontSize = Float.parseFloat(sSize);
+                        float x = Float.parseFloat(sX);
+                        float y = Float.parseFloat(sY);
+                        float width = Float.parseFloat(sWidth);
+                        float height = Float.parseFloat(sHeight);
+
+                        PdfContentByte cb = stamper.getOverContent(page);
+                        cb.saveState();
+
+                        Phrase phrase = new Phrase();
+                        Font phraseFont = FontFactory.getFont(font, "Identity-H", true, fontSize);
+                        if (stroke != null) {
+                            phraseFont.setColor(stroke[0], stroke[1], stroke[2]);
+                        }
+                        phraseFont.setStyle(fontStyle);
+
+                        phrase.setFont(phraseFont);
+                        phrase.add(value);
+                        ColumnText ct = new ColumnText(cb);
+                        ct.setSimpleColumn(x, y, x + width, y + height);
+                        ct.addText(phrase);
+                        ct.go();
                         cb.restoreState();
                     } else {
                         verboseMessages.poll();
@@ -217,6 +317,7 @@ public class PdfForms {
             }
             if (options.has("fonts")) {
                 fontPath = (String) options.valueOf("fonts");
+                FontFactory.registerDirectory(fontPath);
             }
             if (options.has("flatten")) {
                 flatten = true;
@@ -288,6 +389,24 @@ public class PdfForms {
         } else {
             return "";
         }
+    }
+
+    /**
+     * Get tag value
+     *
+     * @param sTag     String
+     * @param eElement Element
+     * @return String
+     */
+    private static String getTagAttribute(String sTag, String attribute, Element eElement) {
+        NodeList nlList = eElement.getElementsByTagName(sTag);
+        if (nlList.getLength() == 0) {
+            return "";
+        }
+
+        Node nValue = nlList.item(0);
+        NamedNodeMap attributes = nValue.getAttributes();
+        return attributes.getNamedItem(attribute).getNodeValue();
     }
 
     /**
